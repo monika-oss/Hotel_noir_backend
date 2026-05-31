@@ -65,6 +65,43 @@ const sendOrderConfirmation = async (order) => {
   }
 };
 
+
+const sendOrderCompletedNotification = async (order) => {
+  try {
+    const envPath = path.resolve(__dirname, '../.env');
+    let envConfig = process.env;
+    if (fs.existsSync(envPath)) {
+      const parsed = dotenv.parse(fs.readFileSync(envPath));
+      envConfig = { ...process.env, ...parsed };
+    }
+
+    if (envConfig.EMAIL_USER && envConfig.EMAIL_USER !== 'your_email@gmail.com') {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: envConfig.EMAIL_USER,
+            pass: envConfig.EMAIL_PASS
+          }
+        });
+        const mailOptions = {
+          from: `"Noir & Gold" <${envConfig.EMAIL_USER}>`,
+          to: order.email,
+          subject: `Your Order is Ready! - Noir & Gold`,
+          text: `Hi ${order.customerName},\n\nGreat news! Your order is now COMPLETED and ready.\n\nThank you for dining with Noir & Gold.\n\nBest regards,\nThe Noir & Gold Team`
+        };
+        await transporter.sendMail(mailOptions);
+        console.log('✅ Order completion email sent to customer');
+      } catch (emailError) {
+        console.error('❌ Error sending completion Email:', emailError.message);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error in completion notification:', error.message);
+  }
+};
+
 module.exports = {
-  sendOrderConfirmation
+  sendOrderConfirmation,
+  sendOrderCompletedNotification
 };

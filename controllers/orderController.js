@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator');
 const Order = require('../models/Order');
-const { sendOrderConfirmation } = require('../utils/notifications');
+const { sendOrderConfirmation, sendOrderCompletedNotification } = require('../utils/notifications');
 
 exports.createOrder = async (req, res) => {
   const errors = validationResult(req);
@@ -43,6 +43,12 @@ exports.updateOrderStatus = async (req, res) => {
     const { status } = req.body;
     const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!order) return res.status(404).json({ message: 'Order not found' });
+    
+    // Trigger completion notification if status changed to completed
+    if (status === 'completed') {
+      sendOrderCompletedNotification(order);
+    }
+    
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
