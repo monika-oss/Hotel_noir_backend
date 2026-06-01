@@ -3,6 +3,7 @@ const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const Reservation = require('../models/Reservation');
 const { adminAuth } = require('../middleware/adminAuth');
+const { emitToAdmin } = require('../utils/socket');
 
 // Validation middleware array
 const validateReservation = [
@@ -26,6 +27,13 @@ router.post('/', validateReservation, async (req, res, next) => {
 
   try {
     const reservation = await Reservation.create(req.body);
+
+    // Real-time notification to admin
+    emitToAdmin('newReservation', {
+      reservation,
+      message: `📅 New reservation from ${reservation.name} - ${reservation.guests} guests - ${reservation.time}`
+    });
+
     res.status(201).json(reservation);
   } catch (error) {
     next(error);

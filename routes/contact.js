@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
 const Contact = require('../models/Contact');
+const { emitToAdmin } = require('../utils/socket');
 
 const validateContact = [
   check('name', 'Name is required').not().isEmpty().trim().escape(),
@@ -21,6 +22,13 @@ router.post('/', validateContact, async (req, res, next) => {
 
   try {
     const contact = await Contact.create(req.body);
+    
+    // Real-time notification to admin
+    emitToAdmin('newContact', {
+      contact,
+      message: `✉️ New contact message from ${contact.name}`
+    });
+
     res.status(201).json({ message: 'Message received', contactId: contact._id });
   } catch (error) {
     next(error);

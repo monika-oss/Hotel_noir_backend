@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const { sendOrderConfirmation, sendOrderCompletedNotification } = require('../utils/notifications');
+const { emitToAdmin } = require('../utils/socket');
 
 exports.createOrder = async (req, res) => {
   const errors = validationResult(req);
@@ -20,7 +21,13 @@ exports.createOrder = async (req, res) => {
 
     const savedOrder = await newOrder.save();
     
-    // Trigger asynchronous notifications
+    // Real-time notification to admin dashboard via Socket.IO
+    emitToAdmin('newOrder', {
+      order: savedOrder,
+      message: `🍽️ New order from ${customerName} - Table ${tableNumber} - $${totalAmount.toFixed(2)}`
+    });
+
+    // Trigger email/WhatsApp notifications (async, non-blocking)
     sendOrderConfirmation(savedOrder);
     
     res.status(201).json(savedOrder);
@@ -44,6 +51,12 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!order) return res.status(404).json({ message: 'Order not found' });
     
+    // Real-time status update to all connected clients
+    emitToAdmin('orderStatusUpdate', {
+      order,
+      message: `Order ${order.customerName} → ${status}`
+    });
+
     // Trigger completion notification if status changed to completed
     if (status === 'completed') {
       sendOrderCompletedNotification(order);
