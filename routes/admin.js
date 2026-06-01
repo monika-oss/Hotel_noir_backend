@@ -18,38 +18,35 @@ router.post('/login', (req, res) => {
 // TEST EMAIL ENDPOINT (Temporary for debugging)
 router.get('/test-email', async (req, res) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+    const { Resend } = require('resend');
+    
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(500).json({ success: false, error: 'RESEND_API_KEY is missing' });
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const { data, error } = await resend.emails.send({
+      from: 'Noir & Gold <onboarding@resend.dev>',
+      to: [process.env.ADMIN_EMAIL],
+      subject: 'Render Server Email Test (Resend API)',
+      html: '<p>If you are reading this, email from Render is working via Resend API!</p>'
     });
 
-    // Test connection first
-    await transporter.verify();
-
-    // Send test email
-    const info = await transporter.sendMail({
-      from: `"Noir & Gold" <${process.env.EMAIL_USER}>`,
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-      subject: 'Render Server Email Test',
-      text: 'If you are reading this, email from Render is working!'
-    });
+    if (error) {
+      return res.status(500).json({ success: false, error: error.message, fullError: error });
+    }
 
     res.json({ 
       success: true, 
-      message: 'Test email sent successfully', 
-      messageId: info.messageId,
-      user: process.env.EMAIL_USER 
+      message: 'Test email sent successfully via Resend API', 
+      data: data
     });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
       error: error.message, 
-      fullError: error,
-      user: process.env.EMAIL_USER ? 'Set correctly' : 'Missing',
-      pass: process.env.EMAIL_PASS ? 'Set correctly' : 'Missing'
+      fullError: error
     });
   }
 });
