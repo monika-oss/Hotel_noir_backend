@@ -4,6 +4,7 @@ const { check, validationResult } = require('express-validator');
 const Reservation = require('../models/Reservation');
 const { adminAuth } = require('../middleware/adminAuth');
 const { emitToAdmin } = require('../utils/socket');
+const { sendReservationConfirmation } = require('../utils/notifications');
 
 // Validation middleware array
 const validateReservation = [
@@ -33,6 +34,9 @@ router.post('/', validateReservation, async (req, res, next) => {
       reservation,
       message: `📅 New reservation from ${reservation.name} - ${reservation.guests} guests - ${reservation.time}`
     });
+
+    // Send email confirmation to customer
+    sendReservationConfirmation(reservation);
 
     res.status(201).json(reservation);
   } catch (error) {
