@@ -13,6 +13,10 @@ const orderSchema = new mongoose.Schema({
   }],
   totalAmount: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'preparing', 'completed'], default: 'pending' },
+  paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+  paymentMethod: { type: String, enum: ['cash', 'razorpay'], default: 'cash' },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

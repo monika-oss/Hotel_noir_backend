@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const { createOrder, getOrders, updateOrderStatus } = require('../controllers/orderController');
+const { createRazorpayOrder, verifyPaymentAndCreateOrder } = require('../controllers/paymentController');
 const { adminAuth } = require('../middleware/adminAuth');
 
 router.post('/', [
@@ -15,5 +16,9 @@ router.post('/', [
 
 router.get('/', adminAuth, getOrders);
 router.put('/:id/status', adminAuth, updateOrderStatus);
+
+// Payment Routes
+router.post('/create-payment', createRazorpayOrder);
+router.post('/verify-payment', verifyPaymentAndCreateOrder);
 
 module.exports = router;
