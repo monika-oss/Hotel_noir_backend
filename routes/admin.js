@@ -18,30 +18,36 @@ router.post('/login', (req, res) => {
 // TEST EMAIL ENDPOINT (Temporary for debugging)
 router.get('/test-email', async (req, res) => {
   try {
-    const { Resend } = require('resend');
-    
-    if (!process.env.RESEND_API_KEY) {
-      return res.status(500).json({ success: false, error: 'RESEND_API_KEY is missing' });
-    }
+    const templateParams = {
+      to_email: process.env.ADMIN_EMAIL || 'test@example.com',
+      customer_name: 'Admin Test',
+      order_items: 'Test Item 1, Test Item 2',
+      total_amount: '0.00',
+      email: process.env.ADMIN_EMAIL || 'test@example.com',
+      order_id: 'TEST-123',
+      orders: []
+    };
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data, error } = await resend.emails.send({
-      from: 'Noir & Gold <onboarding@resend.dev>',
-      to: [process.env.ADMIN_EMAIL],
-      subject: 'Render Server Email Test (Resend API)',
-      html: '<p>If you are reading this, email from Render is working via Resend API!</p>'
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: 'service_05yfaao',
+        template_id: 'template_z27i8ur',
+        user_id: 'FDZD0SLFS6FK9rZYP',
+        template_params: templateParams
+      })
     });
 
-    if (error) {
-      return res.status(500).json({ success: false, error: error.message, fullError: error });
+    if (response.ok) {
+      res.json({ 
+        success: true, 
+        message: 'Test email sent successfully to Customer via EmailJS API' 
+      });
+    } else {
+      const errText = await response.text();
+      res.status(500).json({ success: false, error: errText });
     }
-
-    res.json({ 
-      success: true, 
-      message: 'Test email sent successfully via Resend API', 
-      data: data
-    });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
