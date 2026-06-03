@@ -39,7 +39,7 @@ exports.createRazorpayOrder = async (req, res) => {
 
     const options = {
       amount: amountInPaise,
-      currency: "USD", // Change to INR if you want to accept INR
+      currency: "INR", // Change to INR if you want to accept INR
       receipt: `receipt_${Date.now()}`
     };
 
@@ -84,7 +84,7 @@ exports.verifyPaymentAndCreateOrder = async (req, res) => {
       // Emit to admin dashboard
       emitToAdmin('newOrder', {
         order: savedOrder,
-        message: `🍽️ New PAID order from ${savedOrder.customerName} - Table ${savedOrder.tableNumber} - $${savedOrder.totalAmount.toFixed(2)}`
+        message: `🍽️ New PAID order from ${savedOrder.customerName} - Table ${savedOrder.tableNumber} - ₹${savedOrder.totalAmount.toFixed(2)}`
       });
 
       // Send email/WhatsApp confirmation
