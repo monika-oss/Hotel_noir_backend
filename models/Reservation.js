@@ -8,7 +8,7 @@ const reservationSchema = mongoose.Schema({
   time: { type: String, required: true },
   guests: { type: Number, required: true, min: 1, max: 20 },
   specialRequests: { type: String },
-  status: { type: String, enum: ['upcoming', 'past'], default: 'upcoming' },
+  status: { type: String, enum: ['upcoming', 'seated', 'completed', 'cancelled'], default: 'upcoming' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Reservation', reservationSchema);

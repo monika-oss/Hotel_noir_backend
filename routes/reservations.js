@@ -56,6 +56,33 @@ router.get('/', adminAuth, async (req, res, next) => {
   }
 });
 
+// @route   PUT /api/reservations/:id/status
+// @desc    Update a reservation status
+// @access  Private/Admin
+router.put('/:id/status', adminAuth, async (req, res, next) => {
+  try {
+    const { status, reason } = req.body;
+    const reservation = await Reservation.findById(req.params.id);
+    
+    if (!reservation) {
+      res.status(404);
+      throw new Error('Reservation not found');
+    }
+
+    reservation.status = status;
+    await reservation.save();
+
+    if (status === 'cancelled') {
+      const { sendReservationCancellation } = require('../utils/notifications');
+      await sendReservationCancellation(reservation, reason);
+    }
+
+    res.json(reservation);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // @route   DELETE /api/reservations/:id
 // @desc    Delete a reservation
 // @access  Private/Admin

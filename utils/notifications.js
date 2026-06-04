@@ -150,6 +150,44 @@ const sendReservationConfirmation = async (reservation) => {
   }
 };
 
+const sendReservationCancellation = async (reservation, reason) => {
+  console.log('📧 Sending reservation cancellation for:', reservation._id);
+  
+  try {
+    const cancellationReason = reason ? `\nReason for cancellation: ${reason}` : '';
+    const reservationDetails = `Your table reservation has been CANCELLED.\n\nDate: ${new Date(reservation.date).toLocaleDateString()}\nTime: ${reservation.time}\nGuests: ${reservation.guests}${cancellationReason}\n\nWe apologize for any inconvenience.`;
+
+    const templateParams = {
+      to_email: reservation.email,
+      customer_name: reservation.name,
+      order_items: reservationDetails,
+      total_amount: '0.00',
+      email: reservation.email,
+      order_id: `RES-${reservation._id.toString().substring(0, 6)}`,
+      orders: []
+    };
+
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: templateParams
+      })
+    });
+
+    if (response.ok) {
+      console.log('✅ Reservation cancellation email sent to CUSTOMER via EmailJS!');
+    } else {
+      console.error('❌ EmailJS API Error:', await response.text());
+    }
+  } catch (emailError) {
+    console.error('❌ Error sending cancellation Email:', emailError.message);
+  }
+};
+
 const testNotifications = async () => {
   console.log('Test function temporarily disabled');
 };
@@ -158,5 +196,6 @@ module.exports = {
   sendOrderConfirmation,
   sendOrderCompletedNotification,
   sendReservationConfirmation,
+  sendReservationCancellation,
   testNotifications
 };
